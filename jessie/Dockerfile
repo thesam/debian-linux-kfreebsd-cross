@@ -8,8 +8,13 @@ RUN apt-get update
 
 WORKDIR /build
 RUN apt-get install -y dpkg-dev
-#RUN apt-get source binutils
-RUN apt-get source gcc-5
-RUN apt-get build-dep -y gcc-5
-WORKDIR /build/gcc-5-5.4.0
-RUN dpkg-buildpackage -uc -us --target-arch=kfreebsd-amd64
+RUN apt-get source binutils
+#RUN apt-get source gcc-5
+
+RUN apt-get build-dep -y binutils
+WORKDIR /build/binutils-2.26.1
+RUN dpkg-buildpackage -uc -us -j4 --target-arch=kfreebsd-amd64
+
+#RUN apt-get build-dep -y gcc-5
+#WORKDIR /build/gcc-5-5.4.0
+#RUN dpkg-buildpackage -uc -us --target-arch=kfreebsd-amd64
