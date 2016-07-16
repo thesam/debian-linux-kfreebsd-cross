@@ -1,0 +1,71 @@
+FROM debian:wheezy
+
+RUN mkdir -p /opt/cross
+RUN export PATH=/opt/cross/bin:$PATH
+
+RUN apt-get update
+RUN apt-get install -y wget ca-certificates build-essential
+
+WORKDIR /build
+
+#INSTALL_PATH=/opt/cross
+#TARGET=aarch64-linux
+#LINUX_ARCH=arm64
+#CONFIGURATION_OPTIONS="--disable-multilib" # --disable-threads --disable-shared
+#PARALLEL_MAKE=-j4
+#BINUTILS_VERSION=binutils-2.24
+#GCC_VERSION=gcc-4.9.2
+#LINUX_KERNEL_VERSION=linux-3.17.2
+#GLIBC_VERSION=glibc-2.20
+#MPFR_VERSION=mpfr-3.1.2
+#GMP_VERSION=gmp-6.0.0a
+#MPC_VERSION=mpc-1.0.2
+#ISL_VERSION=isl-0.12.2
+#CLOOG_VERSION=cloog-0.18.1
+
+RUN wget -nc https://ftp.gnu.org/gnu/binutils/binutils-2.24.tar.gz
+RUN wget -nc https://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz
+#wget -nc https://www.kernel.org/pub/linux/kernel/v3.x/$LINUX_KERNEL_VERSION.tar.xz
+RUN wget -nc https://ftp.gnu.org/gnu/glibc/glibc-2.23.tar.xz
+#wget -nc https://ftp.gnu.org/gnu/mpfr/$MPFR_VERSION.tar.xz
+#wget -nc https://ftp.gnu.org/gnu/gmp/$GMP_VERSION.tar.xz
+#wget -nc https://ftp.gnu.org/gnu/mpc/$MPC_VERSION.tar.gz
+#wget -nc ftp://gcc.gnu.org/pub/gcc/infrastructure/$ISL_VERSION.tar.bz2
+#wget -nc ftp://gcc.gnu.org/pub/gcc/infrastructure/$CLOOG_VERSION.tar.gz
+
+RUN for f in *.tar*; do tar xfk $f; done
+
+WORKDIR /build/build-binutils
+RUN ../binutils-2.24/configure --prefix=/opt/cross --target=x86_64-kfreebsd-gnu --disable-multilib
+RUN make -j4
+RUN make install
+
+# TODO: Step 2. Linux Kernel Headers
+
+WORKDIR /build/gcc-4.9.2
+RUN ./contrib/download_prerequisites
+WORKDIR /build/build-gcc
+RUN ../gcc-4.9.2/configure --prefix=/opt/cross --target=x86_64-kfreebsd-gnu --enable-languages=c,c++ --disable-multilib
+RUN make -j4 all-gcc
+RUN make install-gcc
+
+WORKDIR /build/build-glibc
+# TODO: --with-headers=$INSTALL_PATH/$TARGET/include
+RUN ../glibc-2.23/configure --prefix=/opt/cross/x86_64-kfreebsd-gnu --build=$MACHTYPE --host=x86_64-kfreebsd-gnu --target=x86_64-kfreebsd-gnu --disable-multilib libc_cv_forced_unwind=yes
+RUN make install-bootstrap-headers=yes install-headers
+RUN make -j4 csu/subdir_lib
+RUN install csu/crt1.o csu/crti.o csu/crtn.o $INSTALL_PATH/$TARGET/lib
+RUN x86_64-kfreebsd-gnu-gcc -nostdlib -nostartfiles -shared -x c /dev/null -o /opt/cross/x86_64-kfreebsd-gnu/lib/libc.so
+RUN touch /opt/cross/x86_64-kfreebsd-gnu/include/gnu/stubs.h
+
+WORKDIR /build/build-gcc
+RUN make -j4 all-target-libgcc
+RUN make install-target-libgcc
+
+WORKDIR /build/build-glibc
+RUN make -j4
+RUN make install
+
+WORKDIR /build/build-gcc
+RUN make -j4 all
+RUN make install
