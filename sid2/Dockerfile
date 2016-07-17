@@ -1,3 +1,6 @@
+# Cross-compiler, Debian GNU/Linux to Debian GNU/kFreeBSD
+# Based on: http://preshing.com/20141119/how-to-build-a-gcc-cross-compiler/
+
 FROM debian:sid
 
 RUN echo "deb http://httpredir.debian.org/debian sid main" > /etc/apt/sources.list
@@ -30,7 +33,7 @@ RUN make -j4
 RUN make install
 
 WORKDIR /build/build-gcc
-RUN ../gcc-5.4.0/configure --prefix=/opt/cross --target=x86_64-kfreebsd-gnu --enable-languages=c,c++ --disable-multilib
+RUN ../gcc-5.4.0/configure --prefix=/opt/cross --target=x86_64-kfreebsd-gnu --enable-languages=c,c++ --disable-multilib --disable-libcilkrts
 RUN make -j4 all-gcc
 RUN make install-gcc
 
@@ -60,8 +63,8 @@ RUN make install-target-libgcc
 
 WORKDIR /build/build-glibc
 RUN make -j4
-#RUN make install
+RUN make install
 
-#WORKDIR /build/build-gcc
-#RUN make -j4 all
-#RUN make install
+WORKDIR /build/build-gcc
+RUN make -j4 all
+RUN make install
