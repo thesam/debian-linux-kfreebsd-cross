@@ -47,7 +47,7 @@ RUN patch -p1 -i debian/patches/kfreebsd/local-undef-glibc.diff
 
 WORKDIR /build/build-glibc
 #--with-headers=/opt/cross/x86_64-kfreebsd-gnu/include
-RUN ../glibc-2.23/configure --prefix=/opt/cross/x86_64-kfreebsd-gnu --build=$MACHTYPE --host=x86_64-kfreebsd-gnu --target=x86_64-kfreebsd-gnu --disable-multilib libc_cv_forced_unwind=yes --enable-add-ons=fbtl --with-headers=/usr/include/x86_64-kfreebsd-gnu --enable-stackguard-randomization --disable-werror
+RUN ../glibc-2.23/configure --prefix=/opt/cross/x86_64-kfreebsd-gnu --build=$MACHTYPE --host=x86_64-kfreebsd-gnu --target=x86_64-kfreebsd-gnu --disable-multilib libc_cv_forced_unwind=yes --enable-add-ons=fbtl --with-headers=/usr/include/x86_64-kfreebsd-gnu --enable-stackguard-randomization --disable-werror libc_cv_ssp=no libc_cv_ssp_strong=no
 RUN make install-bootstrap-headers=yes install-headers
 RUN make -j4 csu/subdir_lib
 RUN install csu/crt1.o csu/crti.o csu/crtn.o /opt/cross/x86_64-kfreebsd-gnu/lib
@@ -59,7 +59,7 @@ RUN make -j4 all-target-libgcc
 RUN make install-target-libgcc
 
 WORKDIR /build/build-glibc
-#RUN make -j4
+RUN make -j4
 #RUN make install
 
 #WORKDIR /build/build-gcc
