@@ -1,2 +1,0 @@
-  $ /home/x/glibc-2.19/configure --host=x86_64-kfreebsd-gnu --build=x86_64-kfreebsd-gnu --prefix=/usr --without-cvs --enable-add-ons=libidn,ports fbtl  --without-selinux --enable-stackguard-randomization --enable-obsolete-rpc --with-pkgversion=Debian GLIBC 2.19-18+deb8u3 --with-bugurl=http://www.debian.org/Bugs/ --enable-pt_chown --with-headers=/home/samme/glibc-2.19/debian/include --enable-kernel=8.3.0 --disable-compatible-utmp --disable-multi-arch
-
