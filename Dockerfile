@@ -3,28 +3,29 @@
 
 FROM debian:sid
 
+ENV GCC_VERSION 4.9.2
+
 RUN echo "deb http://httpredir.debian.org/debian sid main" > /etc/apt/sources.list
 RUN echo "deb-src http://httpredir.debian.org/debian sid main" >> /etc/apt/sources.list
 
 RUN dpkg --add-architecture kfreebsd-amd64
-RUN apt-get update
-
-RUN apt-get install -y wget ca-certificates build-essential
+RUN apt-get update && apt-get install -y \
+  wget \
+  ca-certificates \
+  build-essential \
+  kfreebsd-kernel-headers:kfreebsd-amd64
 RUN apt-get build-dep -y glibc
-RUN apt-get install kfreebsd-kernel-headers:kfreebsd-amd64
 
 RUN mkdir -p /opt/cross
 ENV PATH /opt/cross/bin:$PATH
 
 WORKDIR /build
 
-RUN wget -nc https://ftp.gnu.org/gnu/binutils/binutils-2.26.tar.gz
-RUN wget -nc https://ftp.gnu.org/gnu/gcc/gcc-5.4.0/gcc-5.4.0.tar.gz
-#RUN wget -nc https://ftp.gnu.org/gnu/glibc/glibc-2.23.tar.xz
-RUN for f in *.tar*; do tar xfk $f; done
+RUN wget -nc https://ftp.gnu.org/gnu/binutils/binutils-2.26.tar.gz && tar xf binutils-2.26.tar.gz
+RUN wget -nc https://ftp.gnu.org/gnu/gcc/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.gz && tar xf gcc-$GCC_VERSION.tar.gz
 RUN apt-get source glibc
 
-WORKDIR /build/gcc-5.4.0
+WORKDIR /build/gcc-$GCC_VERSION
 RUN ./contrib/download_prerequisites
 
 WORKDIR /build/build-binutils
@@ -33,7 +34,7 @@ RUN make -j4
 RUN make install
 
 WORKDIR /build/build-gcc
-RUN ../gcc-5.4.0/configure --prefix=/opt/cross --target=x86_64-kfreebsd-gnu --enable-languages=c,c++ --disable-multilib --disable-libcilkrts
+RUN ../gcc-$GCC_VERSION/configure --prefix=/opt/cross --target=x86_64-kfreebsd-gnu --enable-languages=c,c++ --disable-multilib --disable-libcilkrts
 RUN make -j4 all-gcc
 RUN make install-gcc
 
